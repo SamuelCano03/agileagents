@@ -1,0 +1,37 @@
+{
+  "project_name": "AgileSquad Virtual Sandbox",
+  "vision": "Crear una plataforma de simulación de aprendizaje para desarrolladores junior.",
+  "current_sprint": {
+    "number": 1,
+    "goal": "Implementar el sistema básico de autenticación y el dashboard inicial.",
+    "days_remaining": 3
+  },
+  "backlog": [
+    {
+      "id": "USER-001",
+      "title": "Login con GitHub",
+      "status": "In Progress",
+      "priority": "High",
+      "assigned_to": "DevAgent"
+    },
+    {
+      "id": "USER-002",
+      "title": "Diseño de base de datos",
+      "status": "Done",
+      "priority": "Critical",
+      "assigned_to": "TechLead"
+    },
+    {
+      "id": "USER-003",
+      "title": "Refactorización de CSS",
+      "status": "To Do",
+      "priority": "Low",
+      "assigned_to": null
+    }
+  ],
+  "definition_of_done": [
+    "Pruebas unitarias al 80%",
+    "Revisión de código por el Tech Lead",
+    "Aceptación del Product Owner"
+  ]
+}

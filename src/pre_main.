@@ -1,0 +1,37 @@
+#main.py
+import os
+from dotenv import load_dotenv
+from azure.identity import DefaultAzureCredential
+from azure.ai.projects import AIProjectClient
+from agents.scrum_master import ScrumMasterAgent
+
+load_dotenv()
+
+model = os.getenv("AZURE_AI_MODEL_DEPLOYMENT","")
+endpoint = os.getenv("AZURE_AI_ENDPOINT","")
+
+client = AIProjectClient(
+    credential=DefaultAzureCredential(),
+    endpoint=endpoint
+)
+
+openai_client = client.get_openai_client(api_version="2024-10-21")
+# chat_responses = openai_client.chat.completions.create(
+#     model=model,
+#     messages=[
+#         {"role": "system", "content": "You are a helpful assistant"},
+#         {"role": "user", "content": "What is the size of France in square miles?"},
+#     ],
+# )
+#
+# print(chat_responses.choices[0].message.content)
+scrum_master = ScrumMasterAgent(openai_client, model)
+
+response = scrum_master.run_daily("""
+Dev1: Ayer terminé el endpoint de pagos. Hoy empiezo tests. Bloqueo: el API de QA falla.
+QA: Estoy revisando bugs del sprint pasado. No bloqueos.
+PO: Hoy defino prioridades del backlog.
+""")
+
+print("\n🧑‍💼 Scrum Master:\n")
+print(response)
