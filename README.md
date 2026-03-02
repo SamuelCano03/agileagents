@@ -13,15 +13,15 @@ Create a `.env` file with the following variables:
 JIRA_BASE_URL=https://your-domain.atlassian.net
 JIRA_API_TOKEN=your_token
 JIRA_EMAIL=your@email.com
-JIRA_PROJECT_KEY=SCC
+JIRA_PROJECT_KEY=YOUR_JIRA_PROJECT_KEY
 
 # Governance & Safety
 JIRA_ALLOW_WRITES=true # Must be true to enable write operations
 
 # Hybrid Mode (Optional: LLM-backed agent responses)
 LLM_MODE=github_models
-GITHUB_TOKEN=your_github_pat
-GITHUB_MODEL=gpt-4.1-mini
+GITHUB_TOKEN=your_github_token
+GITHUB_MODEL=your_github_model
 
 ```
 
