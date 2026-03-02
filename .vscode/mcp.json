@@ -1,0 +1,17 @@
+{
+  "servers": {
+    "agileAgentsJira": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "python",
+        "-m",
+        "src.mcp.vscode_bridge_server"
+      ],
+      "env": {
+        "AGILEAGENTS_MCP_HTTP_BASE": "http://127.0.0.1:8000"
+      }
+    }
+  }
+}
