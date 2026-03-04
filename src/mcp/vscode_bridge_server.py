@@ -516,7 +516,7 @@ def jira_seed_sample_backlog(topic: str = "Agile training", count: int = 5) -> D
     )
 )
 def daily_run(
-    language: str = "es",
+    language: str = "en",
     members: List[str] | None = None,
     main_member: str | None = None,
     main_member_update: str | None = None,
@@ -748,7 +748,7 @@ def daily_run(
     )
 )
 def daily_present(
-    language: str = "es",
+    language: str = "en",
     members: List[str] | None = None,
     main_member: str | None = None,
     main_member_update: str | None = None,
@@ -786,7 +786,7 @@ def daily_followup(session_id: str, user_reply: str) -> Dict[str, Any]:
     if not pending:
         raise RuntimeError("Invalid or expired session_id. Run daily_run again to start a new follow-up.")
 
-    language = str(pending.get("language", "es"))
+    language = str(pending.get("language", "en"))
     main_member = str(pending.get("main_member", "team member"))
     stage = str(pending.get("stage", "awaiting_update"))
     last_plan_id = pending.get("last_plan_id")

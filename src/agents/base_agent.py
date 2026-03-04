@@ -35,7 +35,7 @@ class BaseScrumAgent:
     """
 
     role: AgentRole
-    language: str = "es"
+    language: str = "en"
     tools: dict[str, ToolInvoker] = field(default_factory=dict)
 
     system_prompt: str = ""

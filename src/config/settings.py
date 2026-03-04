@@ -24,7 +24,7 @@ class Settings:
     """
 
     # Language
-    default_language: LanguageCode = "es"
+    default_language: LanguageCode = "en"
 
     # Jira
     jira_base_url: str | None = None
@@ -57,9 +57,9 @@ class Settings:
         testing and future validation easier.
         """
 
-        language = os.getenv("DEFAULT_LANGUAGE", "es")
+        language = os.getenv("DEFAULT_LANGUAGE", "en")
         if language not in ("es", "en"):
-            language = "es"
+            language = "en"
 
         llm_mode = os.getenv("LLM_MODE", "none").strip().lower()
         if llm_mode not in ("none", "github_models"):

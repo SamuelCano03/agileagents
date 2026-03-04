@@ -25,7 +25,7 @@ PRODUCT_OWNER_PROMPT_EN = (
 class ProductOwnerAgent(BaseScrumAgent):
     """Agent representing the Product Owner role."""
 
-    def __init__(self, language: str = "es") -> None:
+    def __init__(self, language: str = "en") -> None:
         system_prompt = PRODUCT_OWNER_PROMPT_ES if language == "es" else PRODUCT_OWNER_PROMPT_EN
         super().__init__(role=AgentRole.PRODUCT_OWNER, language=language, system_prompt=system_prompt)
 

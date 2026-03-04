@@ -42,6 +42,19 @@ class PendingActionPlan:
 _PENDING_PLANS: dict[str, PendingActionPlan] = {}
 
 
+_SUPPORTED_ACTIONS = {
+    "create_issue",
+    "comment_issue",
+    "transition_issue",
+    "assign_issue",
+    "update_priority",
+    "edit_issue",
+    "create_subtask",
+    "move_to_active_sprint",
+    "get_issue_details",
+}
+
+
 _AUDIT_LOG_PATH = Path(os.getenv("JIRA_ASSISTANT_AUDIT_LOG", "logs/sm_assistant_audit.jsonl"))
 
 
@@ -305,8 +318,7 @@ def _parse_natural_request_to_action(request_text: str) -> tuple[str, Dict[str, 
     if any(token in normalized_lower for token in ["comenta", "comentario", "comment"]):
         if not key:
             raise HTTPException(status_code=400, detail="Could not infer issue key for comment.")
-        m = re.search(r"(?:comentario|comment)\s*[:\-]\s*(.+)$", text, flags=re.IGNORECASE)
-        comment = m.group(1).strip() if m else text
+        comment = _extract_free_text_payload(text) or text
         return "comment_issue", {"key": key, "comment": comment}
 
     # edit_issue summary/description
@@ -398,6 +410,80 @@ def _extract_issue_key(text: str) -> str | None:
     return key_match.group(0).upper()
 
 
+def _extract_free_text_payload(text: str) -> str | None:
+    """Extract likely free-text payload from natural language commands.
+
+    Strategy (generic, action-agnostic):
+    1) Prefer quoted content.
+    2) Then text after ':'
+    3) Then text after '-'
+    """
+
+    quoted_segments = re.findall(r'"([^"\\]*(?:\\.[^"\\]*)*)"|\'([^\'\\]*(?:\\.[^\'\\]*)*)\'', text)
+    if quoted_segments:
+        for double_quoted, single_quoted in reversed(quoted_segments):
+            candidate = (double_quoted or single_quoted or "").strip()
+            if candidate:
+                return candidate
+
+    if ":" in text:
+        candidate = text.split(":", 1)[1].strip().strip('"').strip("'").strip()
+        if candidate:
+            return candidate
+
+    dash_separator = re.search(r"\s[-–—]\s(.+)$", text)
+    if dash_separator:
+        candidate = dash_separator.group(1).strip().strip('"').strip("'").strip()
+        if candidate:
+            return candidate
+
+    return None
+
+
+def _normalize_and_validate_parsed_action(
+    action: str,
+    params: Dict[str, Any],
+    request_text: str,
+) -> tuple[str, Dict[str, Any]]:
+    """Normalize parsed action/params and validate against plan constraints."""
+
+    normalized_action = action.strip()
+    if normalized_action not in _SUPPORTED_ACTIONS:
+        raise HTTPException(status_code=400, detail=f"Unsupported action: {normalized_action}")
+
+    normalized_params = dict(params)
+    inferred_key = _extract_issue_key(request_text)
+    key_actions = {
+        "get_issue_details",
+        "comment_issue",
+        "transition_issue",
+        "assign_issue",
+        "update_priority",
+        "edit_issue",
+        "move_to_active_sprint",
+    }
+    if normalized_action in key_actions and not normalized_params.get("key") and inferred_key:
+        normalized_params["key"] = inferred_key
+
+    if normalized_action == "comment_issue":
+        original_comment = normalized_params.get("comment")
+        if isinstance(original_comment, str):
+            trimmed = original_comment.strip()
+            if _normalize_for_matching(trimmed) == _normalize_for_matching(request_text):
+                extracted_payload = _extract_free_text_payload(request_text)
+                if extracted_payload:
+                    normalized_params["comment"] = extracted_payload
+
+    if normalized_action == "get_issue_details":
+        key = normalized_params.get("key")
+        if not key:
+            raise HTTPException(status_code=400, detail="get_issue_details requires 'key'.")
+        return normalized_action, normalized_params
+
+    _validate_plan_inputs(normalized_action, normalized_params)
+    return normalized_action, normalized_params
+
+
 def _parse_natural_request_with_llm(request_text: str) -> tuple[str, Dict[str, Any]] | None:
     """Fallback parser using GitHub Models when configured."""
 
@@ -411,7 +497,10 @@ def _parse_natural_request_with_llm(request_text: str) -> tuple[str, Dict[str, A
         "{\"action\": \"<action>\", \"params\": { ... }}. "
         "Supported actions: create_issue, comment_issue, transition_issue, "
         "assign_issue, update_priority, edit_issue, create_subtask, "
-        "move_to_active_sprint, get_issue_details."
+        "move_to_active_sprint, get_issue_details. "
+        "Preserve only user-intended field values in params. "
+        "For comment_issue: params.comment must be only the comment body, "
+        "not the whole instruction sentence and not issue keys."
     )
 
     llm_text = client.generate(
@@ -723,29 +812,23 @@ async def scrum_master_handle_request(payload: Dict[str, Any]) -> Dict[str, Any]
     request_text = (payload.get("request_text") or "").strip()
     reason = payload.get("reason")
 
-    try:
+    llm_parsed = _parse_natural_request_with_llm(request_text)
+    if llm_parsed is not None:
+        action, params = llm_parsed
+    else:
         action, params = _parse_natural_request_to_action(request_text)
-    except HTTPException as parser_error:
-        parsed = _parse_natural_request_with_llm(request_text)
-        if parsed is None:
-            raise parser_error
-        action, params = parsed
 
     if not isinstance(params, dict):
         raise HTTPException(status_code=400, detail="Parsed params must be an object.")
 
-    inferred_key = _extract_issue_key(request_text)
-    key_actions = {
-        "get_issue_details",
-        "comment_issue",
-        "transition_issue",
-        "assign_issue",
-        "update_priority",
-        "edit_issue",
-        "move_to_active_sprint",
-    }
-    if action in key_actions and not params.get("key") and inferred_key:
-        params["key"] = inferred_key
+    try:
+        action, params = _normalize_and_validate_parsed_action(action, params, request_text)
+    except HTTPException as validation_error:
+        if llm_parsed is not None:
+            action, params = _parse_natural_request_to_action(request_text)
+            action, params = _normalize_and_validate_parsed_action(action, params, request_text)
+        else:
+            raise validation_error
 
     if action == "get_issue_details":
         key = params.get("key")

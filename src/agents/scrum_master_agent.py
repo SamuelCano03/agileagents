@@ -26,7 +26,7 @@ SCRUM_MASTER_PROMPT_EN = (
 class ScrumMasterAgent(BaseScrumAgent):
     """Agent representing the Scrum Master role."""
 
-    def __init__(self, language: str = "es") -> None:
+    def __init__(self, language: str = "en") -> None:
         system_prompt = SCRUM_MASTER_PROMPT_ES if language == "es" else SCRUM_MASTER_PROMPT_EN
         super().__init__(role=AgentRole.SCRUM_MASTER, language=language, system_prompt=system_prompt)
         self._llm_client = GithubModelsClient.from_settings()

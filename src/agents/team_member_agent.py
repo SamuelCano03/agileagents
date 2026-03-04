@@ -26,7 +26,7 @@ TEAM_MEMBER_PROMPT_EN = (
 class TeamMemberAgent(BaseScrumAgent):
     """Agent representing a generic team member."""
 
-    def __init__(self, name: str, language: str = "es") -> None:
+    def __init__(self, name: str, language: str = "en") -> None:
         system_prompt = TEAM_MEMBER_PROMPT_ES if language == "es" else TEAM_MEMBER_PROMPT_EN
         super().__init__(role=AgentRole.TEAM_MEMBER, language=language, system_prompt=system_prompt)
         self.name = name
