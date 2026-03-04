@@ -53,7 +53,7 @@ Run interactive dailies with simulated members (Alice, Bob) and real-time Jira i
 
 AgileAgents is designed to live inside **GitHub Copilot Chat** via MCP.
 
-1. **Start Server**: `uv run uvicorn jira_mcp_server.server:app --port 8000`
+1. **Export variables and start Server**: `export $(grep -v '^#' .env | xargs) && uv run uvicorn jira_mcp_server.server:app --port 8000`
 2. **VS Code Setup**:
 * Configure `.vscode/mcp.json` to point to the bridge server.
 * Run `Developer: Reload Window` in VS Code.

@@ -11,5 +11,5 @@
     }
   },
   "onCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && export PATH=\"$HOME/.cargo/bin:$PATH\"",
-  "postCreateCommand": "~/.cargo/bin/uv venv && ~/.cargo/bin/uv pip install -r requirements.txt"
+  "postCreateCommand": "export $(grep -v '^#' .env | xargs) && ~/.cargo/bin/uv venv && ~/.cargo/bin/uv pip install -r requirements.txt"
 }
